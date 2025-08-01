@@ -23,7 +23,6 @@ jobs:
       - name: Set up Rust
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          profile: minimal
           toolchain: nightly
           components: rustfmt, clippy
 
@@ -53,7 +52,6 @@ jobs:
       - name: Set up Rust
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          profile: minimal
           toolchain: ${{ matrix.toolchain }}
 
       - name: Build
@@ -79,15 +77,18 @@ jobs:
       - name: Set up Rust
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          profile: minimal
           toolchain: stable
       - name: Build
         run: cargo build --verbose --all-targets --all-features --release
-      - name: Upload binary
+      - name: Upload binary (Unix)
+        if: runner.os != 'Windows'
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.BINARY_NAME }}-${{ matrix.os }}
-          path: |
-            target/release/${{ env.BINARY_NAME }}
-            target/release/${{ env.BINARY_NAME }}.exe
-          if-no-files-found: ignore
+          path: target/release/${{ env.BINARY_NAME }}
+      - name: Upload binary (Windows)
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.BINARY_NAME }}-${{ matrix.os }}.exe
+          path: target/release/${{ env.BINARY_NAME }}.exe
