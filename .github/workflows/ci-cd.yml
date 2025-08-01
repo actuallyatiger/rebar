@@ -1,0 +1,93 @@
+name: Rust CI/CD
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+env:
+  BINARY_NAME: rebar
+  CARGO_TERM_COLOR: always
+  CLIPPY_COMPONENTS: -W clippy::correctness -W clippy::complexity -W clippy::perf -W clippy::style -W clippy::suspicious
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+          components: rustfmt, clippy
+
+      - name: Run rustfmt
+        run: cargo fmt --all -- --check --verbose
+
+      - name: Run Clippy
+        run: cargo clippy --all-targets --all-features -- -D warnings ${{ env.CLIPPY_COMPONENTS }}
+
+  test:
+    name: Test
+    runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ matrix.toolchain == 'nightly' }} # Allow nightly toolchain to fail
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
+        toolchain:
+          - stable
+          - nightly
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          profile: minimal
+          toolchain: ${{ matrix.toolchain }}
+
+      - name: Build
+        run: cargo build --verbose --all-targets --all-features
+
+      - name: Run tests
+        run: cargo test --verbose --all-features
+
+  upload-artifacts:
+    name: Upload Artifacts
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
+    needs:
+      - lint
+      - test
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+      - name: Build
+        run: cargo build --verbose --all-targets --all-features --release
+      - name: Upload binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.BINARY_NAME }}-${{ matrix.os }}
+          path: |
+            target/release/${{ env.BINARY_NAME }}
+            target/release/${{ env.BINARY_NAME }}.exe
+          if-no-files-found: ignore
