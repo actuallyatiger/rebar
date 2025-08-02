@@ -1,0 +1,37 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-toml
+      - id: check-xml
+      - id: check-merge-conflict
+
+  - repo: https://github.com/doublify/pre-commit-rust
+    rev: v1.0
+    hooks:
+      - id: fmt
+        args: ["--check", "--verbose", "--all", "--"]
+      - id: clippy
+        args:
+          [
+            "--all-targets",
+            "--all-features",
+            "--",
+            "-D",
+            "warnings",
+            "-W",
+            "clippy::correctness",
+            "-W",
+            "clippy::complexity",
+            "-W",
+            "clippy::perf",
+            "-W",
+            "clippy::style",
+            "-W",
+            "clippy::suspicious",
+          ]
+      - id: cargo-check
