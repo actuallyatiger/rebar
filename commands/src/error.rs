@@ -172,9 +172,27 @@ impl fmt::Display for ObjectError {
 impl std::error::Error for ObjectError {}
 
 // Conversion traits for easy error propagation
+impl From<std::io::Error> for IoError {
+    fn from(err: std::io::Error) -> Self {
+        match err.kind() {
+            std::io::ErrorKind::PermissionDenied => IoError::Permission {
+                path: "unknown".to_string(), // Default path when context is not available
+                source: err,
+            },
+            std::io::ErrorKind::AlreadyExists => IoError::AlreadyExists {
+                path: "unknown".to_string(),
+            },
+            std::io::ErrorKind::NotFound => IoError::NotFound {
+                path: "unknown".to_string(),
+            },
+            _ => IoError::Other(err),
+        }
+    }
+}
+
 impl From<std::io::Error> for RebarError {
     fn from(err: std::io::Error) -> Self {
-        RebarError::Io(IoError::Other(err))
+        RebarError::Io(IoError::from(err))
     }
 }
 

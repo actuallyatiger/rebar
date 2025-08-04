@@ -26,7 +26,7 @@ fn main() {
     // TODO: Implement other commands
     match args.command {
         // Create the main .rebar directory
-        Command::Init => commands::init(),
+        Command::Init => commands::init().unwrap(),
         Command::CatFile { hash } => {
             utils::validate_hex(&hash).unwrap();
             commands::cat_file(&hash).unwrap()
