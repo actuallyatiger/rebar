@@ -2,6 +2,8 @@
 
 mod utils;
 
+use commands::RebarError;
+
 use clap::{Parser, Subcommand};
 
 /// A new version control system written in Rust
@@ -20,16 +22,26 @@ enum Command {
     CatFile { hash: String },
 }
 
+fn handle_error(error: RebarError) {
+    eprintln!("{error}");
+    std::process::exit(1);
+}
+
 fn main() {
     let args = Args::parse();
 
     // TODO: Implement other commands
-    match args.command {
-        // Create the main .rebar directory
-        Command::Init => commands::init().unwrap(),
+    let result = match args.command {
+        Command::Init => commands::init().map_err(RebarError::from),
         Command::CatFile { hash } => {
-            utils::validate_hex(&hash).unwrap();
-            commands::cat_file(&hash).unwrap()
+            if let Err(e) = utils::validate_hex(&hash) {
+                handle_error(RebarError::from(e));
+            }
+            commands::cat_file(&hash)
         }
+    };
+
+    if let Err(e) = result {
+        handle_error(e);
     }
 }
