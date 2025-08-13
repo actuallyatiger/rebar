@@ -18,8 +18,17 @@ enum Command {
     Init,
     /// Print the contents of a .rebar object
     CatFile { hash: String },
-    /// Create a new .rebar object
-    HashFile { path: String },
+    /// Compute object ID and optionally create a blob from a file
+    HashObject {
+        /// Path to the file to hash (if not using --stdin)
+        path: Option<String>,
+        /// Read input from stdin instead of a file
+        #[arg(long)]
+        stdin: bool,
+        /// Actually write the object into the object database
+        #[arg(short, long)]
+        write: bool,
+    },
 }
 
 fn handle_error(error: RebarError) {
@@ -39,12 +48,23 @@ fn main() {
             }
             commands::cat_file(&hash)
         }
-        Command::HashFile { path } => {
-            if let Err(e) = utils::validate_path(&path) {
-                handle_error(RebarError::from(e));
+        Command::HashObject { path, stdin, write } => {
+            if stdin && path.is_some() {
+                eprintln!("Error: Cannot specify both --stdin and a file path");
+                std::process::exit(1);
             }
-            // commands::hash_file(&path)
-            todo!("Implement the hash_file method")
+            if !stdin && path.is_none() {
+                eprintln!("Error: Must specify either --stdin or a file path");
+                std::process::exit(1);
+            }
+            
+            if let Some(ref path) = path {
+                if let Err(e) = utils::validate_path(path) {
+                    handle_error(RebarError::from(e));
+                }
+            }
+            
+            commands::hash_object(path.as_deref(), stdin, write)
         }
     };
 
