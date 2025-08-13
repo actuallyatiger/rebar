@@ -1,6 +1,6 @@
 //! Rebar - A new version control system written in Rust
 
-use utils::errors::RebarError;
+use utils::errors::{InputError, RebarError};
 
 use clap::{Parser, Subcommand};
 
@@ -19,7 +19,16 @@ enum Command {
     /// Print the contents of a .rebar object
     CatFile { hash: String },
     /// Create a new .rebar object
-    HashFile { path: String },
+    HashObject {
+        // The path to the file to hash, if not reading from stdin
+        path: Option<String>,
+        // Whether to read the file contents from stdin
+        #[arg(long)]
+        stdin: bool,
+        // Should the object be written to the current repository
+        #[arg(short, long)]
+        write: bool,
+    },
 }
 
 fn handle_error(error: RebarError) {
@@ -39,12 +48,35 @@ fn main() {
             }
             commands::cat_file(&hash)
         }
-        Command::HashFile { path } => {
-            if let Err(e) = utils::validate_path(&path) {
-                handle_error(RebarError::from(e));
+        Command::HashObject {
+            path,
+            stdin,
+            write: _,
+        } => {
+            if stdin && path.is_some() {
+                handle_error(RebarError::Input(
+                    utils::errors::InputError::ArgumentConflict {
+                        message: "Cannot specify both a path and to read from stdin".to_string(),
+                    },
+                ))
+            } else if !stdin && path.is_none() {
+                handle_error(RebarError::Input(InputError::ArgumentConflict {
+                    message: "Must specify a path or to read from stdin".to_string(),
+                }))
             }
-            // commands::hash_file(&path)
-            todo!("Implement the hash_file method")
+
+            if let Some(ref p) = path {
+                if let Err(e) = utils::validate_path(p) {
+                    Err(RebarError::from(e))
+                } else {
+                    // commands::hash_file(&path)
+                    todo!("Implement the hash_file method")
+                }
+            } else {
+                // This is the stdin case (path is None and stdin is true)
+                // commands::hash_file(&path)
+                todo!("Implement the hash_file method")
+            }
         }
     };
 
