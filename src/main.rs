@@ -1,8 +1,6 @@
 //! Rebar - A new version control system written in Rust
 
-mod utils;
-
-use commands::RebarError;
+use utils::errors::RebarError;
 
 use clap::{Parser, Subcommand};
 
@@ -20,6 +18,8 @@ enum Command {
     Init,
     /// Print the contents of a .rebar object
     CatFile { hash: String },
+    /// Create a new .rebar object
+    HashFile { path: String },
 }
 
 fn handle_error(error: RebarError) {
@@ -38,6 +38,13 @@ fn main() {
                 handle_error(RebarError::from(e));
             }
             commands::cat_file(&hash)
+        }
+        Command::HashFile { path } => {
+            if let Err(e) = utils::validate_path(&path) {
+                handle_error(RebarError::from(e));
+            }
+            // commands::hash_file(&path)
+            todo!("Implement the hash_file method")
         }
     };
 

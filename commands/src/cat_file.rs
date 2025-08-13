@@ -6,7 +6,10 @@ use std::{
     str::FromStr,
 };
 
-use crate::{ObjectError, ObjectType, RebarError};
+use utils::errors::{IoError, ObjectError, RebarError};
+use utils::types::ObjectType;
+
+use utils::globals::FILE_SIZE_LIMIT;
 
 fn parse_header(header_line: &str) -> Result<(ObjectType, usize), RebarError> {
     let mut parts = header_line.trim().split_whitespace();
@@ -32,14 +35,12 @@ fn parse_header(header_line: &str) -> Result<(ObjectType, usize), RebarError> {
 pub fn cat_file(hash: &str) -> Result<(), RebarError> {
     let path = format!(".rebar/objects/{}", hash);
     let file = File::open(&path).map_err(|e| match e.kind() {
-        std::io::ErrorKind::NotFound => {
-            RebarError::Io(crate::IoError::NotFound { path: path.clone() })
-        }
-        std::io::ErrorKind::PermissionDenied => RebarError::Io(crate::IoError::Permission {
+        std::io::ErrorKind::NotFound => RebarError::Io(IoError::NotFound { path: path.clone() }),
+        std::io::ErrorKind::PermissionDenied => RebarError::Io(IoError::Permission {
             path: path.clone(),
             source: e,
         }),
-        _ => RebarError::Io(crate::IoError::Other(e)),
+        _ => RebarError::Io(IoError::Other(e)),
     })?;
 
     let mut reader = BufReader::new(file);
@@ -48,10 +49,9 @@ pub fn cat_file(hash: &str) -> Result<(), RebarError> {
 
     let (object_type, size) = parse_header(&header_line)?;
 
-    const MAX_OBJECT_SIZE: usize = 10 * 1024 * 1024; // 10 MB limit
-    if size > MAX_OBJECT_SIZE {
+    if size > FILE_SIZE_LIMIT {
         return Err(ObjectError::InvalidLength {
-            expected: MAX_OBJECT_SIZE,
+            expected: FILE_SIZE_LIMIT,
             actual: Some(size),
         }
         .into());

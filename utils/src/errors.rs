@@ -41,6 +41,16 @@ pub enum IoError {
     NotFound {
         path: String,
     },
+    EmptyPath,
+    PathNotExists {
+        path: String,
+    },
+    NotAFile {
+        path: String,
+    },
+    NoRepository {
+        path: String,
+    },
     Other(std::io::Error),
 }
 
@@ -52,6 +62,12 @@ impl fmt::Display for IoError {
                 write!(f, "File or directory already exists: {}", path)
             }
             IoError::NotFound { path } => write!(f, "File or directory not found: {}", path),
+            IoError::EmptyPath => write!(f, "Path cannot be empty"),
+            IoError::PathNotExists { path } => write!(f, "Path does not exist: {}", path),
+            IoError::NotAFile { path } => write!(f, "Path is not a file: {}", path),
+            IoError::NoRepository { path } => {
+                write!(f, "Path '{}' is not inside a Rebar repository", path)
+            }
             IoError::Other(err) => write!(f, "IO error: {}", err),
         }
     }
