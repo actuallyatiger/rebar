@@ -2,6 +2,8 @@
 
 use std::fmt;
 
+use crate::globals::HASH_SIZE;
+
 #[derive(Debug)]
 pub enum RebarError {
     Io(IoError),
@@ -122,8 +124,8 @@ impl fmt::Display for HashError {
             HashError::InvalidLength { length } => {
                 write!(
                     f,
-                    "Incorrect hash length: expected 64, got {} chars",
-                    length
+                    "Incorrect hash length: expected {}, got {} chars",
+                    HASH_SIZE, length
                 )
             }
             HashError::InvalidCharacter {
