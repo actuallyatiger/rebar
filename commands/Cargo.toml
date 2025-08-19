@@ -7,3 +7,4 @@ edition = "2024"
 hex = "0.4.3"
 zstd = "0.13.3"
 utils = { path = "../utils" }
+sha2 = "0.10.9"
