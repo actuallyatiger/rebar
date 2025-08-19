@@ -2,11 +2,14 @@
 
 use std::fmt;
 
+use crate::globals::HASH_SIZE;
+
 #[derive(Debug)]
 pub enum RebarError {
     Io(IoError),
     Hash(HashError),
     Object(ObjectError),
+    Input(InputError),
 }
 
 impl fmt::Display for RebarError {
@@ -15,6 +18,7 @@ impl fmt::Display for RebarError {
             RebarError::Io(err) => write!(f, "IO error: {}", err),
             RebarError::Hash(err) => write!(f, "Hash error: {}", err),
             RebarError::Object(err) => write!(f, "Object error: {}", err),
+            RebarError::Input(err) => write!(f, "Input error: {}", err),
         }
     }
 }
@@ -25,6 +29,7 @@ impl std::error::Error for RebarError {
             RebarError::Io(err) => Some(err),
             RebarError::Hash(err) => Some(err),
             RebarError::Object(err) => Some(err),
+            RebarError::Input(err) => Some(err),
         }
     }
 }
@@ -84,6 +89,29 @@ impl std::error::Error for IoError {
 }
 
 #[derive(Debug)]
+pub enum InputError {
+    ArgumentConflict { message: String },
+    MissingArgument { argument: String },
+    InvalidArgument { argument: String, reason: String },
+}
+
+impl fmt::Display for InputError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            InputError::ArgumentConflict { message } => write!(f, "Argument conflict: {}", message),
+            InputError::MissingArgument { argument } => {
+                write!(f, "Missing required argument: {}", argument)
+            }
+            InputError::InvalidArgument { argument, reason } => {
+                write!(f, "Invalid argument '{}': {}", argument, reason)
+            }
+        }
+    }
+}
+
+impl std::error::Error for InputError {}
+
+#[derive(Debug)]
 pub enum HashError {
     InvalidLength { length: usize },
     InvalidCharacter { position: usize, character: char },
@@ -96,8 +124,8 @@ impl fmt::Display for HashError {
             HashError::InvalidLength { length } => {
                 write!(
                     f,
-                    "Incorrect hash length: expected 64, got {} chars",
-                    length
+                    "Incorrect hash length: expected {}, got {} chars",
+                    HASH_SIZE, length
                 )
             }
             HashError::InvalidCharacter {
@@ -134,6 +162,8 @@ pub enum ObjectError {
     InvalidFormat { object_type: String, reason: String },
     /// Missing required field in object
     MissingField { field: String, object_type: String },
+    /// Failed to compress an object
+    CompressionError { reason: String },
 }
 
 impl fmt::Display for ObjectError {
@@ -181,6 +211,9 @@ impl fmt::Display for ObjectError {
                     field, object_type
                 )
             }
+            ObjectError::CompressionError { reason } => {
+                write!(f, "Failed to compress object: {}", reason)
+            }
         }
     }
 }
@@ -227,5 +260,11 @@ impl From<HashError> for RebarError {
 impl From<ObjectError> for RebarError {
     fn from(err: ObjectError) -> Self {
         RebarError::Object(err)
+    }
+}
+
+impl From<InputError> for RebarError {
+    fn from(err: InputError) -> Self {
+        RebarError::Input(err)
     }
 }

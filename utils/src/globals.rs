@@ -15,5 +15,9 @@ macro_rules! const_parse_unsigned {
 }
 
 // Now we can use the macro directly for both constants
-pub const HASH_SIZE: u8 = const_parse_unsigned!(env!("HASH_SIZE"), u8);
 pub const FILE_SIZE_LIMIT: usize = const_parse_unsigned!(env!("FILE_SIZE_LIMIT"), usize);
+
+// Not dynamic as the hashing algorithm is fixed to SHA256
+pub const HASH_SIZE: u8 = 64;
+
+pub const COMPRESSION_LEVEL: u8 = const_parse_unsigned!(env!("COMPRESSION_LEVEL"), u8);
