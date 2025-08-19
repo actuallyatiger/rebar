@@ -61,9 +61,9 @@ fn main() {
                 }))
             }
 
-            if let Some(ref p) = path {
+            if let Some(p) = &path {
                 if let Err(e) = utils::validate_path(p) {
-                    handle_error(RebarError::from(e))
+                    handle_error(RebarError::from(e));
                 }
             }
             commands::hash_object(path.as_deref(), stdin, write)
