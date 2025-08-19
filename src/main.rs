@@ -20,12 +20,12 @@ enum Command {
     CatFile { hash: String },
     /// Create a new .rebar object
     HashObject {
-        // The path to the file to hash, if not reading from stdin
+        /// The path to the file to hash, if not reading from stdin
         path: Option<String>,
-        // Whether to read the file contents from stdin
+        /// Whether to read the file contents from stdin
         #[arg(long)]
         stdin: bool,
-        // Should the object be written to the current repository
+        /// Should the object be written to the current repository
         #[arg(short, long)]
         write: bool,
     },
@@ -48,11 +48,7 @@ fn main() {
             }
             commands::cat_file(&hash)
         }
-        Command::HashObject {
-            path,
-            stdin,
-            write: _,
-        } => {
+        Command::HashObject { path, stdin, write } => {
             if stdin && path.is_some() {
                 handle_error(RebarError::Input(
                     utils::errors::InputError::ArgumentConflict {
@@ -67,16 +63,10 @@ fn main() {
 
             if let Some(ref p) = path {
                 if let Err(e) = utils::validate_path(p) {
-                    Err(RebarError::from(e))
-                } else {
-                    // commands::hash_file(&path)
-                    todo!("Implement the hash_file method")
+                    handle_error(RebarError::from(e))
                 }
-            } else {
-                // This is the stdin case (path is None and stdin is true)
-                // commands::hash_file(&path)
-                todo!("Implement the hash_file method")
             }
+            commands::hash_object(path.as_deref(), stdin, write)
         }
     };
 
