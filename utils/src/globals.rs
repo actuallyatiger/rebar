@@ -19,3 +19,5 @@ pub const FILE_SIZE_LIMIT: usize = const_parse_unsigned!(env!("FILE_SIZE_LIMIT")
 
 // Not dynamic as the hashing algorithm is fixed to SHA256
 pub const HASH_SIZE: u8 = 64;
+
+pub const COMPRESSION_LEVEL: u8 = const_parse_unsigned!(env!("COMPRESSION_LEVEL"), u8);

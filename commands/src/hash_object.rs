@@ -3,36 +3,44 @@
 use sha2::{Digest, Sha256};
 use std::io::{Read, Write};
 
+use utils::globals::COMPRESSION_LEVEL;
+
 use utils::errors::{IoError, ObjectError, RebarError};
 
-fn read_stdin() -> String {
+fn read_stdin() -> Result<String, RebarError> {
     let mut buf = String::new();
     std::io::stdin()
         .read_to_string(&mut buf)
-        .expect("Failed to read from stdin");
-    buf
+        .map_err(|e| IoError::Other(e))?;
+    Ok(buf)
 }
 
-fn read_file(path: &str) -> String {
-    std::fs::read_to_string(path).expect("Failed to read file")
+fn read_file(path: &str) -> Result<String, RebarError> {
+    std::fs::read_to_string(path).map_err(|e| {
+        match e.kind() {
+            std::io::ErrorKind::NotFound => IoError::NotFound {
+                path: path.to_string(),
+            },
+            std::io::ErrorKind::PermissionDenied => IoError::Permission {
+                path: path.to_string(),
+                source: e,
+            },
+            _ => IoError::Other(e),
+        }
+        .into()
+    })
 }
 
 pub fn hash_object(path: Option<&str>, stdin: bool, write: bool) -> Result<(), RebarError> {
-    /* Steps:
-    1. if stdin, read, else get the file
-    2. use zstd to compress the body
-    3. use sha256 to hash the contents
-    4. if write, write the object to the current repository,
-    else output to terminal */
-
+    // get contents either from stdin or provided file
     let contents = if stdin {
-        read_stdin()
+        read_stdin()?
     } else {
-        read_file(path.unwrap())
+        read_file(path.unwrap())?
     };
 
     // now we have the contents
-    let encoded = match zstd::stream::encode_all(contents.as_bytes(), 3) {
+    let encoded = match zstd::stream::encode_all(contents.as_bytes(), COMPRESSION_LEVEL as i32) {
         Ok(data) => data,
         Err(e) => {
             return Err(ObjectError::CompressionError {
@@ -47,19 +55,17 @@ pub fn hash_object(path: Option<&str>, stdin: bool, write: bool) -> Result<(), R
         .as_bytes()
         .to_vec();
 
-    if write {
-        // hash the contents of the header and encoded
-        let mut hasher = Sha256::new();
-        hasher.update(&header);
-        hasher.update(&encoded);
-        let hash = hasher.finalize();
-        let hash_hex = hex::encode(hash);
+    // hash the contents of the header and encoded
+    let mut hasher = Sha256::new();
+    hasher.update(&header);
+    hasher.update(&encoded);
+    let hash = hasher.finalize();
+    let hash_hex = hex::encode(hash);
 
+    if write {
         // find the repository and then the path to the object
         let repo_path = utils::find_repository(".").map_err(RebarError::from)?;
-        println!("DEBUG: Found repository: {}", repo_path);
         let object_path = format!("{}/objects/{}", repo_path, hash_hex);
-        println!("DEBUG: Object path: {}", object_path);
 
         // check that the object doesn't already exist
         if std::path::Path::new(&object_path).exists() {
@@ -72,9 +78,7 @@ pub fn hash_object(path: Option<&str>, stdin: bool, write: bool) -> Result<(), R
         file.write_all(&encoded).map_err(RebarError::from)?;
     } else {
         // stdout
-        let header_str = String::from_utf8_lossy(&header);
-        let encoded_str = String::from_utf8_lossy(&encoded);
-        println!("{}{}", header_str, encoded_str);
+        println!("{}", hash_hex)
     }
 
     Ok(())
