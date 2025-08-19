@@ -33,7 +33,9 @@ fn parse_header(header_line: &str) -> Result<(ObjectType, usize), RebarError> {
 }
 
 pub fn cat_file(hash: &str) -> Result<(), RebarError> {
-    let path = format!(".rebar/objects/{}", hash);
+    // find the repository and file
+    let repo_path = utils::find_repository(".").map_err(RebarError::from)?;
+    let path = format!("{}/objects/{}", repo_path, hash);
     let file = File::open(&path).map_err(|e| match e.kind() {
         std::io::ErrorKind::NotFound => RebarError::Io(IoError::NotFound { path: path.clone() }),
         std::io::ErrorKind::PermissionDenied => RebarError::Io(IoError::Permission {
