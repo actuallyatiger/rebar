@@ -162,6 +162,8 @@ pub enum ObjectError {
     InvalidFormat { object_type: String, reason: String },
     /// Missing required field in object
     MissingField { field: String, object_type: String },
+    /// Failed to compress an object
+    CompressionError { reason: String },
 }
 
 impl fmt::Display for ObjectError {
@@ -208,6 +210,9 @@ impl fmt::Display for ObjectError {
                     "Missing required field '{}' in {} object",
                     field, object_type
                 )
+            }
+            ObjectError::CompressionError { reason } => {
+                write!(f, "Failed to compress object: {}", reason)
             }
         }
     }
