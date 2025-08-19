@@ -74,21 +74,31 @@ jobs:
       - test
     steps:
       - uses: actions/checkout@v4
+
       - name: Set up Rust
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           toolchain: stable
+
       - name: Build
         run: cargo build --verbose --all-targets --all-features --release
+
+      - name: Platform
+        id: platform
+        uses: ASzc/change-string-case-action@v6
+        with:
+          string: ${{ runner.os }}
+
       - name: Upload binary (Unix)
         if: runner.os != 'Windows'
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.BINARY_NAME }}-${{ matrix.os }}
+          name: ${{ env.BINARY_NAME }}-${{ steps.platform.outputs.lowercase }}
           path: target/release/${{ env.BINARY_NAME }}
+
       - name: Upload binary (Windows)
         if: runner.os == 'Windows'
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.BINARY_NAME }}-${{ matrix.os }}.exe
+          name: ${{ env.BINARY_NAME }}-${{ steps.platform.outputs.lowercase }}
           path: target/release/${{ env.BINARY_NAME }}.exe
