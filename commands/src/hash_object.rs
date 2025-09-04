@@ -11,7 +11,7 @@ fn read_stdin() -> Result<String, RebarError> {
     let mut buf = String::new();
     std::io::stdin()
         .read_to_string(&mut buf)
-        .map_err(|e| IoError::Other(e))?;
+        .map_err(IoError::Other)?;
     Ok(buf)
 }
 
@@ -65,7 +65,7 @@ pub fn hash_object(path: Option<&str>, stdin: bool, write: bool) -> Result<(), R
     if write {
         // find the repository and then the path to the object
         let repo_path = utils::find_repository(".").map_err(RebarError::from)?;
-        let object_path = format!("{}/objects/{}", repo_path, hash_hex);
+        let object_path = format!("{repo_path}/objects/{hash_hex}");
 
         // check that the object doesn't already exist
         if std::path::Path::new(&object_path).exists() {
@@ -78,7 +78,7 @@ pub fn hash_object(path: Option<&str>, stdin: bool, write: bool) -> Result<(), R
         file.write_all(&encoded).map_err(RebarError::from)?;
     } else {
         // stdout
-        println!("{}", hash_hex)
+        println!("{hash_hex}")
     }
 
     Ok(())

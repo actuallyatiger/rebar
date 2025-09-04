@@ -12,7 +12,7 @@ use utils::types::ObjectType;
 use utils::globals::FILE_SIZE_LIMIT;
 
 fn parse_header(header_line: &str) -> Result<(ObjectType, usize), RebarError> {
-    let mut parts = header_line.trim().split_whitespace();
+    let mut parts = header_line.split_whitespace();
 
     let object_type_str = parts.next().ok_or_else(|| ObjectError::MalformedHeader {
         reason: "Missing object type".to_string(),
@@ -26,7 +26,7 @@ fn parse_header(header_line: &str) -> Result<(ObjectType, usize), RebarError> {
     let size = size_str
         .parse::<usize>()
         .map_err(|_| ObjectError::MalformedHeader {
-            reason: format!("Invalid size: {}", size_str),
+            reason: format!("Invalid size: {size_str}"),
         })?;
 
     Ok((object_type, size))
@@ -35,7 +35,7 @@ fn parse_header(header_line: &str) -> Result<(ObjectType, usize), RebarError> {
 pub fn cat_file(hash: &str) -> Result<(), RebarError> {
     // find the repository and file
     let repo_path = utils::find_repository(".").map_err(RebarError::from)?;
-    let path = format!("{}/objects/{}", repo_path, hash);
+    let path = format!("{repo_path}/objects/{hash}");
     let file = File::open(&path).map_err(|e| match e.kind() {
         std::io::ErrorKind::NotFound => RebarError::Io(IoError::NotFound { path: path.clone() }),
         std::io::ErrorKind::PermissionDenied => RebarError::Io(IoError::Permission {
@@ -85,7 +85,7 @@ pub fn cat_file(hash: &str) -> Result<(), RebarError> {
         ObjectType::Blob => {
             let decompressed =
                 zstd::decode_all(&content[..]).map_err(|e| ObjectError::CorruptedContent {
-                    reason: format!("Decompression failed: {}", e),
+                    reason: format!("Decompression failed: {e}"),
                 })?;
 
             print!("{}", String::from_utf8_lossy(&decompressed));
