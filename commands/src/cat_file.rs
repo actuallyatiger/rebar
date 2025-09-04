@@ -34,8 +34,12 @@ fn parse_header(header_line: &str) -> Result<(ObjectType, usize), RebarError> {
 }
 
 pub fn cat_file(hash: &str) -> Result<(), RebarError> {
+    cat_file_from_path(hash, ".")
+}
+
+fn cat_file_from_path(hash: &str, start_path: &str) -> Result<(), RebarError> {
     // find the repository and file
-    let repo_path = utils::find_repository(".").map_err(RebarError::from)?;
+    let repo_path = utils::find_repository(start_path).map_err(RebarError::from)?;
     let path = format!("{repo_path}/objects/{hash}");
     let file = File::open(&path).map_err(|e| match e.kind() {
         std::io::ErrorKind::NotFound => RebarError::Io(IoError::NotFound { path: path.clone() }),
@@ -213,14 +217,8 @@ mod tests {
 
         create_blob_object(&temp_dir, &hash, content)?;
 
-        // Change to the temp directory so find_repository can find .rebar
-        let original_dir = std::env::current_dir()?;
-        std::env::set_current_dir(temp_dir.path())?;
-
-        let result = cat_file(&hash);
-
-        // Restore original directory
-        std::env::set_current_dir(original_dir)?;
+        // Use the temp directory path directly instead of changing working directory
+        let result = cat_file_from_path(&hash, temp_dir.path().to_str().unwrap());
 
         assert!(result.is_ok());
         Ok(())
@@ -231,12 +229,7 @@ mod tests {
         let temp_dir = create_test_repository()?;
         let hash = "b".repeat(64);
 
-        let original_dir = std::env::current_dir()?;
-        std::env::set_current_dir(temp_dir.path())?;
-
-        let result = cat_file(&hash);
-
-        std::env::set_current_dir(original_dir)?;
+        let result = cat_file_from_path(&hash, temp_dir.path().to_str().unwrap());
 
         match result {
             Err(RebarError::Io(utils::errors::IoError::NotFound { path })) => {
@@ -252,12 +245,7 @@ mod tests {
         let temp_dir = TempDir::new()?;
         let hash = "c".repeat(64);
 
-        let original_dir = std::env::current_dir()?;
-        std::env::set_current_dir(temp_dir.path())?;
-
-        let result = cat_file(&hash);
-
-        std::env::set_current_dir(original_dir)?;
+        let result = cat_file_from_path(&hash, temp_dir.path().to_str().unwrap());
 
         match result {
             Err(RebarError::Io(utils::errors::IoError::NoRepository { .. })) => {
@@ -280,12 +268,7 @@ mod tests {
         file.write_all(b"invalid 100\n")?;
         file.write_all(b"some content")?;
 
-        let original_dir = std::env::current_dir()?;
-        std::env::set_current_dir(temp_dir.path())?;
-
-        let result = cat_file(&hash);
-
-        std::env::set_current_dir(original_dir)?;
+        let result = cat_file_from_path(&hash, temp_dir.path().to_str().unwrap());
 
         match result {
             Err(RebarError::Object(ObjectError::InvalidType { found })) => {
@@ -308,12 +291,7 @@ mod tests {
         file.write_all(b"blob\n")?;
         file.write_all(b"some content")?;
 
-        let original_dir = std::env::current_dir()?;
-        std::env::set_current_dir(temp_dir.path())?;
-
-        let result = cat_file(&hash);
-
-        std::env::set_current_dir(original_dir)?;
+        let result = cat_file_from_path(&hash, temp_dir.path().to_str().unwrap());
 
         match result {
             Err(RebarError::Object(ObjectError::MalformedHeader { reason })) => {
@@ -337,12 +315,7 @@ mod tests {
         file.write_all(header.as_bytes())?;
         file.write_all(b"some content")?;
 
-        let original_dir = std::env::current_dir()?;
-        std::env::set_current_dir(temp_dir.path())?;
-
-        let result = cat_file(&hash);
-
-        std::env::set_current_dir(original_dir)?;
+        let result = cat_file_from_path(&hash, temp_dir.path().to_str().unwrap());
 
         match result {
             Err(RebarError::Object(ObjectError::InvalidLength { expected, actual })) => {
@@ -366,12 +339,7 @@ mod tests {
         file.write_all(b"blob 100\n")?;
         file.write_all(b"short")?; // Only 5 bytes, but header says 100
 
-        let original_dir = std::env::current_dir()?;
-        std::env::set_current_dir(temp_dir.path())?;
-
-        let result = cat_file(&hash);
-
-        std::env::set_current_dir(original_dir)?;
+        let result = cat_file_from_path(&hash, temp_dir.path().to_str().unwrap());
 
         match result {
             Err(RebarError::Object(ObjectError::InvalidLength { expected, actual })) => {
@@ -395,12 +363,7 @@ mod tests {
         file.write_all(b"blob 5\n")?;
         file.write_all(b"this is much longer than 5 bytes")?;
 
-        let original_dir = std::env::current_dir()?;
-        std::env::set_current_dir(temp_dir.path())?;
-
-        let result = cat_file(&hash);
-
-        std::env::set_current_dir(original_dir)?;
+        let result = cat_file_from_path(&hash, temp_dir.path().to_str().unwrap());
 
         match result {
             Err(RebarError::Object(ObjectError::InvalidLength { expected, actual })) => {
@@ -424,12 +387,7 @@ mod tests {
         file.write_all(b"blob 10\n")?;
         file.write_all(b"corrupted!")?; // Not valid zstd data
 
-        let original_dir = std::env::current_dir()?;
-        std::env::set_current_dir(temp_dir.path())?;
-
-        let result = cat_file(&hash);
-
-        std::env::set_current_dir(original_dir)?;
+        let result = cat_file_from_path(&hash, temp_dir.path().to_str().unwrap());
 
         match result {
             Err(RebarError::Object(ObjectError::CorruptedContent { reason })) => {
@@ -448,12 +406,7 @@ mod tests {
         // Create a blob with empty content
         create_blob_object(&temp_dir, &hash, "")?;
 
-        let original_dir = std::env::current_dir()?;
-        std::env::set_current_dir(temp_dir.path())?;
-
-        let result = cat_file(&hash);
-
-        std::env::set_current_dir(original_dir)?;
+        let result = cat_file_from_path(&hash, temp_dir.path().to_str().unwrap());
 
         assert!(result.is_ok());
         Ok(())
@@ -468,12 +421,7 @@ mod tests {
         let content = "A".repeat(1000);
         create_blob_object(&temp_dir, &hash, &content)?;
 
-        let original_dir = std::env::current_dir()?;
-        std::env::set_current_dir(temp_dir.path())?;
-
-        let result = cat_file(&hash);
-
-        std::env::set_current_dir(original_dir)?;
+        let result = cat_file_from_path(&hash, temp_dir.path().to_str().unwrap());
 
         assert!(result.is_ok());
         Ok(())
@@ -488,12 +436,7 @@ mod tests {
         let content = "Hello, 世界! 🦀 Rust is awesome!";
         create_blob_object(&temp_dir, &hash, content)?;
 
-        let original_dir = std::env::current_dir()?;
-        std::env::set_current_dir(temp_dir.path())?;
-
-        let result = cat_file(&hash);
-
-        std::env::set_current_dir(original_dir)?;
+        let result = cat_file_from_path(&hash, temp_dir.path().to_str().unwrap());
 
         assert!(result.is_ok());
         Ok(())
