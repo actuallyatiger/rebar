@@ -1,9 +1,22 @@
+[workspace]
+members = [".", "commands", "utils"]
+resolver = "3"
+
 [package]
 name = "rebar"
 version = "0.1.0"
 edition = "2024"
 
+[[bin]]
+name = "rebar"
+path = "src/main.rs"
+
 [dependencies]
 clap = { version = "4.5.42", features = ["derive"] }
 commands = { path = "./commands" }
 utils = { path = "./utils" }
+
+[dev-dependencies]
+tempfile = "3.12"
+assert_cmd = "2.0"
+predicates = "3.1"
