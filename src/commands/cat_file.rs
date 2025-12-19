@@ -12,7 +12,7 @@ use crate::utils::types::ObjectType;
 use crate::utils::globals::FILE_SIZE_LIMIT;
 
 fn parse_header(header_line: &str) -> Result<(ObjectType, usize), RebarError> {
-    let mut parts = header_line.trim().split_whitespace();
+    let mut parts = header_line.split_whitespace();
 
     let object_type_str = parts.next().ok_or_else(|| ObjectError::MalformedHeader {
         reason: "Missing object type".to_string(),

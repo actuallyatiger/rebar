@@ -11,7 +11,7 @@ fn read_stdin() -> Result<String, RebarError> {
     let mut buf = String::new();
     std::io::stdin()
         .read_to_string(&mut buf)
-        .map_err(|e| IoError::Other(e))?;
+        .map_err(IoError::Other)?;
     Ok(buf)
 }
 
