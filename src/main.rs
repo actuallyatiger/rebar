@@ -47,7 +47,10 @@ fn main() {
         Command::Init => crate::commands::init().map_err(RebarError::from),
         Command::CatFile { hash } => {
             if let Err(e) = crate::utils::validate_hex(&hash) {
-                handle_error(RebarError::from(e));
+                handle_error(RebarError::Input(InputError::InvalidArgument {
+                    argument: "hash".to_string(),
+                    reason: e.to_string(),
+                }));
             }
             crate::commands::cat_file(&hash)
         }
@@ -59,8 +62,8 @@ fn main() {
                     },
                 ))
             } else if !stdin && path.is_none() {
-                handle_error(RebarError::Input(InputError::ArgumentConflict {
-                    message: "Must specify a path or to read from stdin".to_string(),
+                handle_error(RebarError::Input(InputError::MissingArgument {
+                    argument: "path (or --stdin)".to_string(),
                 }))
             }
 

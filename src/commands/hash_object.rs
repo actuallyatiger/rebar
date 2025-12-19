@@ -73,9 +73,9 @@ pub fn hash_object(path: Option<&str>, stdin: bool, write: bool) -> Result<(), R
         }
 
         // create the file and write the contents to it
-        let mut file = std::fs::File::create(object_path).map_err(RebarError::from)?;
-        file.write_all(&header).map_err(RebarError::from)?;
-        file.write_all(&encoded).map_err(RebarError::from)?;
+        let mut file = std::fs::File::create(object_path).map_err(IoError::from)?;
+        file.write_all(&header).map_err(IoError::from)?;
+        file.write_all(&encoded).map_err(IoError::from)?;
     } else {
         // stdout
         println!("{}", hash_hex)

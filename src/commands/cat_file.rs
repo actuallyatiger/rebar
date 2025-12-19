@@ -47,7 +47,7 @@ pub fn cat_file(hash: &str) -> Result<(), RebarError> {
 
     let mut reader = BufReader::new(file);
     let mut header_line = String::new();
-    reader.read_line(&mut header_line)?;
+    reader.read_line(&mut header_line).map_err(IoError::from)?;
 
     let (object_type, size) = parse_header(&header_line)?;
 
@@ -60,7 +60,7 @@ pub fn cat_file(hash: &str) -> Result<(), RebarError> {
     }
 
     let mut content = vec![0; size];
-    let bytes_read = reader.read(&mut content)?;
+    let bytes_read = reader.read(&mut content).map_err(IoError::from)?;
 
     // Check if we read the expected amount
     if bytes_read != size {
@@ -73,7 +73,7 @@ pub fn cat_file(hash: &str) -> Result<(), RebarError> {
 
     // Verify no extra content
     let mut extra = [0u8; 1];
-    if reader.read(&mut extra)? > 0 {
+    if reader.read(&mut extra).map_err(IoError::from)? > 0 {
         return Err(ObjectError::InvalidLength {
             expected: size,
             actual: None, // We know there's at least one extra byte
