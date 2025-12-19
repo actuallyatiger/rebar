@@ -6,10 +6,10 @@ use std::{
     str::FromStr,
 };
 
-use utils::errors::{IoError, ObjectError, RebarError};
-use utils::types::ObjectType;
+use crate::utils::errors::{IoError, ObjectError, RebarError};
+use crate::utils::types::ObjectType;
 
-use utils::globals::FILE_SIZE_LIMIT;
+use crate::utils::globals::FILE_SIZE_LIMIT;
 
 fn parse_header(header_line: &str) -> Result<(ObjectType, usize), RebarError> {
     let mut parts = header_line.trim().split_whitespace();
@@ -34,7 +34,7 @@ fn parse_header(header_line: &str) -> Result<(ObjectType, usize), RebarError> {
 
 pub fn cat_file(hash: &str) -> Result<(), RebarError> {
     // find the repository and file
-    let repo_path = utils::find_repository(".").map_err(RebarError::from)?;
+    let repo_path = crate::utils::find_repository(".").map_err(RebarError::from)?;
     let path = format!("{}/objects/{}", repo_path, hash);
     let file = File::open(&path).map_err(|e| match e.kind() {
         std::io::ErrorKind::NotFound => RebarError::Io(IoError::NotFound { path: path.clone() }),

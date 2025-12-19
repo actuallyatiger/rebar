@@ -3,9 +3,9 @@
 use sha2::{Digest, Sha256};
 use std::io::{Read, Write};
 
-use utils::globals::COMPRESSION_LEVEL;
+use crate::utils::globals::COMPRESSION_LEVEL;
 
-use utils::errors::{IoError, ObjectError, RebarError};
+use crate::utils::errors::{IoError, ObjectError, RebarError};
 
 fn read_stdin() -> Result<String, RebarError> {
     let mut buf = String::new();
@@ -64,7 +64,7 @@ pub fn hash_object(path: Option<&str>, stdin: bool, write: bool) -> Result<(), R
 
     if write {
         // find the repository and then the path to the object
-        let repo_path = utils::find_repository(".").map_err(RebarError::from)?;
+        let repo_path = crate::utils::find_repository(".").map_err(RebarError::from)?;
         let object_path = format!("{}/objects/{}", repo_path, hash_hex);
 
         // check that the object doesn't already exist

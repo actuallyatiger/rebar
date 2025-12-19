@@ -1,6 +1,9 @@
 //! Rebar - A new version control system written in Rust
 
-use utils::errors::{InputError, RebarError};
+mod utils;
+mod commands;
+
+use crate::utils::errors::{InputError, RebarError};
 
 use clap::{Parser, Subcommand};
 
@@ -41,17 +44,17 @@ fn main() {
 
     // TODO: Implement other commands
     let result = match args.command {
-        Command::Init => commands::init().map_err(RebarError::from),
+        Command::Init => crate::commands::init().map_err(RebarError::from),
         Command::CatFile { hash } => {
-            if let Err(e) = utils::validate_hex(&hash) {
+            if let Err(e) = crate::utils::validate_hex(&hash) {
                 handle_error(RebarError::from(e));
             }
-            commands::cat_file(&hash)
+            crate::commands::cat_file(&hash)
         }
         Command::HashObject { path, stdin, write } => {
             if stdin && path.is_some() {
                 handle_error(RebarError::Input(
-                    utils::errors::InputError::ArgumentConflict {
+                    InputError::ArgumentConflict {
                         message: "Cannot specify both a path and to read from stdin".to_string(),
                     },
                 ))
@@ -62,11 +65,11 @@ fn main() {
             }
 
             if let Some(ref p) = path
-                && let Err(e) = utils::validate_path(p)
+                && let Err(e) = crate::utils::validate_path(p)
             {
                 handle_error(RebarError::from(e))
             }
-            commands::hash_object(path.as_deref(), stdin, write)
+            crate::commands::hash_object(path.as_deref(), stdin, write)
         }
     };
 

@@ -2,7 +2,7 @@
 
 use std::str::FromStr;
 
-use crate::errors::{ObjectError, RebarError};
+use super::errors::{ObjectError, RebarError};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ObjectType {

@@ -1,8 +1,8 @@
 //! Core commands for the Rebar VCS
 
-use crate::errors::{HashError, IoError};
+use super::errors::{HashError, IoError};
 
-use crate::globals::HASH_SIZE;
+use super::globals::HASH_SIZE;
 
 /// Check if a hash contains an invalid character
 fn check_invalid_char(hash: &str) -> Option<usize> {

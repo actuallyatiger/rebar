@@ -2,7 +2,7 @@
 
 use std::fmt;
 
-use crate::globals::HASH_SIZE;
+use super::globals::HASH_SIZE;
 
 #[derive(Debug)]
 pub enum RebarError {
