@@ -1,7 +1,7 @@
 //! Initialize a new .rebar repository
 
-use std::fs;
 use crate::utils::errors::IoError;
+use std::fs;
 
 fn create_dir_with_context(path: &str) -> Result<(), IoError> {
     fs::create_dir(path).map_err(|err| match err.kind() {

@@ -24,27 +24,17 @@ pub enum IoError {
         source: std::io::Error,
     },
     #[error("File or directory already exists: {path}")]
-    AlreadyExists {
-        path: String,
-    },
+    AlreadyExists { path: String },
     #[error("File or directory not found: {path}")]
-    NotFound {
-        path: String,
-    },
+    NotFound { path: String },
     #[error("Path cannot be empty")]
     EmptyPath,
     #[error("Path does not exist: {path}")]
-    PathNotExists {
-        path: String,
-    },
+    PathNotExists { path: String },
     #[error("Path is not a file: {path}")]
-    NotAFile {
-        path: String,
-    },
+    NotAFile { path: String },
     #[error("Path '{path}' is not inside a Rebar repository")]
-    NoRepository {
-        path: String,
-    },
+    NoRepository { path: String },
     #[error("IO error: {0}")]
     Other(#[from] std::io::Error),
 }
@@ -73,7 +63,9 @@ pub enum ObjectError {
     #[error("Invalid object type '{found}' (expected blob, tree, or commit)")]
     InvalidType { found: String },
     /// Object header indicates a different length higher than actual content
-    #[error("Object length mismatch: header indicates {expected} bytes, but content is {actual:?} bytes")]
+    #[error(
+        "Object length mismatch: header indicates {expected} bytes, but content is {actual:?} bytes"
+    )]
     InvalidLength {
         expected: usize,
         actual: Option<usize>,

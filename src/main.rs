@@ -1,7 +1,7 @@
 //! Rebar - A new version control system written in Rust
 
-mod utils;
 mod commands;
+mod utils;
 
 use crate::utils::errors::{InputError, RebarError};
 
@@ -56,11 +56,9 @@ fn main() {
         }
         Command::HashObject { path, stdin, write } => {
             if stdin && path.is_some() {
-                handle_error(RebarError::Input(
-                    InputError::ArgumentConflict {
-                        message: "Cannot specify both a path and to read from stdin".to_string(),
-                    },
-                ))
+                handle_error(RebarError::Input(InputError::ArgumentConflict {
+                    message: "Cannot specify both a path and to read from stdin".to_string(),
+                }))
             } else if !stdin && path.is_none() {
                 handle_error(RebarError::Input(InputError::MissingArgument {
                     argument: "path (or --stdin)".to_string(),
